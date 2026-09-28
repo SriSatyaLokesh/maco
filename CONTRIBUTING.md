@@ -29,6 +29,7 @@ plugins/maco/skills/<name>/SKILL.md   # you edit here
 npm run sync       # mirror skills into .agents/
 npm run check      # fail if the mirror is stale
 npm run validate   # skills, mirror, manifest, config, internal links
+npm test           # runs check and validate
 ```
 
 Commit the source **and** the regenerated mirror in the same commit. CI fails
@@ -36,9 +37,10 @@ on drift.
 
 ### Why the mirror is generated and not symlinked
 
-`.agents/skills/` is the copy that 5 of the 6 supported hosts actually load:
+`.agents/skills/` is the copy that 8 of the 9 supported hosts actually load:
 Copilot (CLI, cloud agent and code review), VS Code agent mode, Codex CLI,
-Antigravity and OpenCode. Only Claude Code reads the plugin's own `skills/`.
+Google Antigravity, Google Gemini, Cursor, Windsurf, and OpenCode. Only Claude
+Code reads the plugin's own `skills/`.
 
 Symlinks would be tidier, but they need elevation or developer mode on Windows,
 and a marketplace consumer on Windows should not have to think about that. So
@@ -47,6 +49,8 @@ and verified in CI. If you edit a mirrored file by hand, `npm run check` will
 tell you, and it will be right to.
 
 ## Adding a skill
+
+Start by opening an issue using the [Skill proposal](.github/ISSUE_TEMPLATE/new_skill.md) template.
 
 1. `plugins/maco/skills/<name>/SKILL.md`
 2. YAML frontmatter with `name` and `description`. The `name` must match the

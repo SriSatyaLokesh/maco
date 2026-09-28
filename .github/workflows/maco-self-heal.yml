@@ -25,10 +25,11 @@ jobs:
   self-heal:
     # The guard from the maco-self-heal skill, expressed as a job condition.
     # A red test run is evidence about the code, not a typo - an agent that
-    # patches failing tests is an agent that deletes evidence.
+    # Consumer template: runs in consumer repositories that install MACO, not in MACO itself.
     if: >-
-      github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'failure'
+      github.repository != 'SriSatyaLokesh/maco' &&
+      (github.event_name == 'workflow_dispatch' ||
+       github.event.workflow_run.conclusion == 'failure')
     runs-on: ubuntu-latest
     steps:
       - name: Resolve failed run
@@ -95,6 +96,10 @@ jobs:
           MACO_MODEL: ${{ vars.MACO_SELF_HEAL_MODEL }}
         run: |
           set -euo pipefail
+          if [ -z "${MACO_MODEL:-}" ]; then
+            echo "::notice::MACO consumer template: no provider configured yet. See docs/MODELS.md to wire your model."
+            exit 0
+          fi
           echo "Implement the provider call here - see docs/MODELS.md."
           echo "Expected output: a \`\`\`suggestion block with COMPLETE replacement text."
           exit 1

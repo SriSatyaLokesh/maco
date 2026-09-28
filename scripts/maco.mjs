@@ -47,8 +47,35 @@ const HOSTS = [
   {
     id: "antigravity",
     label: "Antigravity",
+    // Antigravity auto-loads .agents/skills/ in the workspace root with zero configuration.
     probe: () => [existsSync(join(HOME, ".gemini")), existsSync(join(HOME, ".antigravity"))],
     command: () => "gh skill install SriSatyaLokesh/maco --agent antigravity --scope project",
+  },
+  {
+    id: "gemini",
+    label: "Google Gemini (CLI / Code Assist)",
+    probe: () => [existsSync(join(HOME, ".gemini")), existsSync(join(HOME, ".config", "gemini"))],
+    command: () => "gh skill install SriSatyaLokesh/maco --agent gemini --scope project",
+  },
+  {
+    id: "cursor",
+    label: "Cursor",
+    probe: () => [
+      existsSync(join(HOME, ".cursor")),
+      existsSync(join(HOME, "AppData", "Roaming", "Cursor")),
+      existsSync(join(HOME, ".config", "Cursor")),
+    ],
+    command: () => "gh skill install SriSatyaLokesh/maco --agent cursor --scope project",
+  },
+  {
+    id: "windsurf",
+    label: "Windsurf",
+    probe: () => [
+      existsSync(join(HOME, ".windsurf")),
+      existsSync(join(HOME, ".codeium")),
+      existsSync(join(HOME, "AppData", "Roaming", "Windsurf")),
+    ],
+    command: () => "gh skill install SriSatyaLokesh/maco --agent windsurf --scope project",
   },
   {
     id: "vscode",
@@ -85,6 +112,8 @@ if (mode === "detect") {
     console.log(`  ${h.id}:`)
     for (const line of h.command().split("\n")) console.log(`    ${line}`)
   }
+  console.log("  universal (installs .agents/skills/ directly into project):")
+  console.log("    npx skills add SriSatyaLokesh/maco")
   console.log("")
   process.exit(0)
 }

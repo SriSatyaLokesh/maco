@@ -36,10 +36,10 @@ your provider.
 
 | Tier | Suits | Typical shape of a model here |
 |---|---|---|
-| Cheap + fast | `triage`, `acAudit` | Small fast model. A frontier model here is waste; these tasks are classification. |
-| Mid | `selfHeal` | Needs to read a diff and a stack trace and produce a correct minimal patch. |
-| Frontier | `escalation` | Ambiguous blockers, multi-file reasoning, disputes between agents. |
-| Anything | `intake` | Whatever you already pay for locally. |
+| Cheap + fast | `triage`, `acAudit` | Small, fast model (e.g. Gemini 2.5 Flash / Flash Lite, GPT-4o-mini, Claude 3.5 Haiku). Frontier models here are waste; these tasks are classification. |
+| Mid | `selfHeal` | Strong code reasoning (e.g. Gemini 2.5 Flash, Claude 3.5 Sonnet, GPT-4o). Needs to read a diff and stack trace and produce a correct minimal patch. |
+| Frontier | `escalation` | Deep reasoning (e.g. Gemini 2.5 Pro, Claude 3.7 Sonnet, OpenAI o3-mini / o1). Ambiguous blockers, multi-file reasoning, disputes between agents. |
+| Anything | `intake` | Whatever you already pay for locally in your agent host session. |
 
 The single most common misconfiguration is a frontier model on `acAudit`. It
 is the highest-frequency role and the most mechanical. It will cost several

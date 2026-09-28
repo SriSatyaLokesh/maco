@@ -22,16 +22,17 @@ concurrency:
 
 jobs:
   ac-audit:
-    # Audit is advisory by default. Set `enforce: true` in the workflow input
-    # or a repo variable once the false-positive rate is acceptable.
+    # Consumer template: runs in consumer repositories that install MACO, not in MACO itself.
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
+    if: github.repository != 'SriSatyaLokesh/maco' && github.event.pull_request.draft == false
     steps:
+      # Check out the base branch to read maco.json and skills safely. Never
+      # check out untrusted PR head code under pull_request_target where repo
+      # secrets are in scope.
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.base_ref || github.event.repository.default_branch }}
 
       - name: Resolve PR number
         id: pr
@@ -103,6 +104,10 @@ jobs:
           MACO_MODEL: ${{ vars.MACO_AC_AUDIT_MODEL }}
         run: |
           set -euo pipefail
+          if [ -z "${MACO_MODEL:-}" ]; then
+            echo "::notice::MACO consumer template: no provider configured yet. See docs/MODELS.md to wire your model."
+            exit 0
+          fi
           echo "Implement the provider call here - see docs/MODELS.md."
           echo "Expected output: a \`\`\`maco-verdict fenced JSON block."
           exit 1
