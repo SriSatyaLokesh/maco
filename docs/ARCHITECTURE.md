@@ -35,10 +35,13 @@ path. So a naive plugin gets its skills into 1 of 6 hosts.
 | Host | `.agents/skills/` | `.claude/skills/` | Notes |
 |---|---|---|---|
 | OpenCode | yes | yes | reads all three of its own, `.claude`, `.agents` |
-| GitHub Copilot (CLI, cloud agent, code review) | yes | yes | |
+| GitHub Copilot (CLI, cloud agent, code review) | yes | yes | auto-loads code-review/ from workspace |
 | VS Code agent skills | yes | yes | |
 | Codex CLI | yes | no | |
-| Antigravity | yes | no | |
+| Antigravity | yes | no | native auto-discovery in workspace root |
+| Google Gemini | yes | no | agentskills.io standard |
+| Cursor | yes | no | reads .agents/skills/ in project |
+| Windsurf | yes | no | reads .agents/skills/ in project |
 | Claude Code | no | yes | via the plugin's own `skills/` dir |
 
 ### The decision
@@ -213,10 +216,9 @@ limits belong at the provider.
   measured its false-positive rate, the default should flip. Until then
   advisory is the correct default, because a blocked PR from a bad first
   release costs contributors permanently.
-- **Windows-first CI.** All workflows are authored for `ubuntu-latest`. A
-  Windows job would validate the `gh`/`jq`/`git` assumptions on the platform
-  where they are most fragile, and the mirror generator is already
-  Windows-first by design.
+- **Windows-first CI. Resolved:** `ci.yml` runs a dual-OS matrix over
+  `ubuntu-latest` and `windows-latest` to validate path and line-ending
+  assumptions on both platforms on every pull request.
 - **Eval harness.** `maco-skill-eval` defines the method and the three
   canonical cases, but the cases are run by hand. Automating them means
   something can execute a skill against a fixture and diff the verdict, which

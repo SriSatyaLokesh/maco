@@ -15,7 +15,9 @@
     "sync": "node scripts/sync-skills.mjs",
     "check": "node scripts/sync-skills.mjs --check",
     "install:maco": "node scripts/maco.mjs install",
-    "validate": "node scripts/validate.mjs"
+    "detect": "node scripts/maco.mjs detect",
+    "validate": "node scripts/validate.mjs",
+    "test": "npm run check && npm run validate"
   },
   "keywords": [
     "code-review",

@@ -9,7 +9,18 @@ MACO is pre-1.0, so minor versions may break skill output formats. Pin with
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- Support and detection for 9 agent hosts in `scripts/maco.mjs`: Google Antigravity (`agy` workspace auto-discovery), Google Gemini, Cursor, Windsurf, OpenAI Codex, GitHub Copilot, Claude Code, OpenCode, and VS Code.
+- Universal install command (`npx skills add SriSatyaLokesh/maco`) for direct `.agents/skills/` setup in any repository.
+- Dedicated `new_skill.md` issue template for community skill proposals.
+- Cross-platform CI matrix (`ubuntu-latest` and `windows-latest`) in `.github/workflows/ci.yml`.
+- Standard `npm test` script in `package.json` mapping to `npm run check && npm run validate`.
+
+### Fixed
+
+- Hardened `.github/workflows/maco-ac-audit.yml` template against checking out untrusted PR head code under `pull_request_target`.
+- Cleaned up `.github/PULL_REQUEST_TEMPLATE.md` to remove raw YAML frontmatter headers.
 
 ## [0.1.0] - first release
 

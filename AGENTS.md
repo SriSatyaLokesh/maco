@@ -52,7 +52,7 @@ Source of truth: `plugins/maco/skills/<name>/SKILL.md`.
 ## Conventions
 
 - `gh`, `git`, `jq`. Nothing else. No MCP server, no vendor SDK, no runtime
-  dependency. This is what makes 6-of-6 host portability real rather than
+  dependency. This is what makes 9-of-9 host portability real rather than
   aspirational, and it keeps `npm run validate` reproducible and free.
 - Calibrate specificity per section. Prescriptive where a wrong order breaks
   something; explanatory where several approaches are valid and the agent should

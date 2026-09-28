@@ -3,7 +3,7 @@
 **M**aintainer-**A**ssisted **C**ontribution **O**rchestrator.
 
 Portable AI pull-request review, acceptance-criteria gating, and CI
-self-healing for GitHub. One plugin, six agent hosts, **your** model.
+self-healing for GitHub. One plugin, nine agent hosts, **your** model.
 
 MACO is two-sided. It helps the **maintainer** decide which PRs are ready and
 hands contributors a patch they can accept with one click. It helps the
@@ -39,28 +39,36 @@ is spent, a human comment replaces the model call rather than a red X.
 
 ## Install
 
-```
+```bash
 # Claude Code
 claude plugin marketplace add SriSatyaLokesh/maco
 claude plugin install maco@maco
 
-# everything else
-npx skills add SriSatyaLokesh/maco --agent opencode
+# GitHub Copilot / Codex / Gemini / Cursor / Windsurf / VS Code / OpenCode
 gh skill install SriSatyaLokesh/maco --agent copilot --scope project
+gh skill install SriSatyaLokesh/maco --agent codex --scope project
+gh skill install SriSatyaLokesh/maco --agent gemini --scope project
+gh skill install SriSatyaLokesh/maco --agent cursor --scope project
+gh skill install SriSatyaLokesh/maco --agent windsurf --scope project
+npx skills add SriSatyaLokesh/maco --agent opencode
+
+# Universal (adds .agents/skills/ directly to your project repository)
+npx skills add SriSatyaLokesh/maco
 ```
 
 Not sure which host you have?
 
-```
+```bash
 node scripts/maco.mjs detect
 ```
 
 ### Portability
 
 Claude Code loads `skills/` from *inside* a plugin directory. Every other host
-- OpenCode, Copilot (CLI, cloud agent, **and code review**), VS Code agent
-mode, Codex CLI, Antigravity - reads `.agents/skills/`, the agentskills.io
-neutral path.
+(GitHub Copilot, Google Antigravity, Google Gemini, OpenAI Codex, Cursor,
+Windsurf, OpenCode, VS Code agent mode) reads `.agents/skills/`, the agentskills.io
+neutral path. Google Antigravity auto-loads `.agents/skills/` directly from the
+workspace root with zero configuration.
 
 So MACO keeps one hand-written source of truth at
 `plugins/maco/skills/` and generates one mirror at `.agents/skills/`:
@@ -70,7 +78,7 @@ plugins/maco/skills/   <- you edit here
         |
         |  npm run sync
         v
-.agents/skills/        <- generated, committed, 5 hosts load this
+.agents/skills/        <- generated, committed, 8 hosts load this
         |
         v
 Claude Code loads plugins/maco/skills/ directly
@@ -82,7 +90,7 @@ and a marketplace consumer should not have to care about that. CI runs
 from the source.
 
 Two details of the generator are load bearing, because getting either wrong
-breaks the mirror *silently* on five of six hosts:
+breaks the mirror *silently* on eight of nine hosts:
 
 - **The provenance banner goes inside the frontmatter**, after the opening
   `---`, never before it. Frontmatter that does not start at byte 0 is not
