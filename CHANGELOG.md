@@ -9,61 +9,71 @@ MACO is pre-1.0, so minor versions may break skill output formats. Pin with
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.1.0] - first release
+
+First public release. Nine skills, the `maco@maco` Claude Code plugin, the
+`.agents/skills/` mirror, two consumer workflow templates, and the full
+community surface.
+
 ### Added
 
-- `maco-spec-to-issue` - turns existing specification documents (PRD,
-  architecture doc, ADR set, roadmap, traceability matrix) into a structured
-  backlog of milestones and issues with numbered acceptance criteria. Plans and
-  dry-runs before it writes; never files without one confirmation.
-- `maco-skill-eval` - grades a skill's output against assertions written before
-  the run, using real artifacts. Makes the manual test loop in `CONTRIBUTING.md`
-  repeatable, and names failure modes (confident wrong, missing trigger, false
-  trigger, over-confident, over-budget, drifted) so a fix lands in the right
-  layer.
+Seven interactive skills - these run in a session you already pay for, so they
+are $0 marginal:
 
-### Fixed
+| Skill | Purpose |
+|---|---|
+| `code-review` | One-pass PR review mapped to the linked issue's `AC-1..N`. Posts one structured verdict, read-only. |
+| `maco-story` | Three-question intake to a jargon-free issue with numbered ACs and an explicit out-of-scope list. |
+| `maco-contribute` | Contributor path: claim, confirm ACs, branch, pre-flight, respond to review. |
+| `maco-triage` | Classify an issue or PR queue. At most one comment per item; silence is a valid outcome. |
+| `maco-pr-ready` | Deterministic pre-flight: linkage, branch name, commit grammar, body completeness, verification. |
+| `maco-spec-to-issue` | Turns a PRD, architecture doc, ADR set, roadmap or traceability matrix into milestones and issues with ACs. Plans and dry-runs before it writes. |
+| `maco-skill-eval` | Grades a skill's output against assertions written before the run. Names failure modes so a fix lands in the right layer. |
 
-- **The generated skill mirror had its provenance banner before the YAML
-  frontmatter instead of inside it.** Frontmatter that does not begin at byte
-  zero is not frontmatter: strict parsers (gray-matter and similar) read the
-  whole file as body, leaving the skill with no name and no description. Since
-  `.agents/skills/` is the copy that 5 of the 6 supported hosts load, affected
-  skills would not have loaded at all, and a skill that fails to load is
+Two CI skills - bring your own provider key:
+
+| Skill | Purpose |
+|---|---|
+| `maco-ac-audit` | Headless AC-to-diff mapping emitting strict JSON a workflow can gate on. |
+| `maco-self-heal` | On red CI only: trace + diff + ACs to a minimal one-click `suggestion` patch. |
+
+Distribution: the `maco@maco` Claude Code plugin reads `plugins/maco/skills/`
+directly; Copilot, VS Code, Codex, Antigravity and OpenCode read the generated
+`.agents/skills/` mirror. `scripts/maco.mjs detect` reports which hosts are
+installed and prints the command for each.
+
+### Packaging decisions worth recording
+
+Three choices, each of which fails silently if reversed:
+
+- **The mirror's provenance banner sits inside the frontmatter**, after the
+  opening `---`, never before it. Frontmatter that does not begin at byte 0 is
+  not frontmatter: a strict parser reads the whole file as body, the skill
+  loads with no name and no description, and a skill that fails to load is
   indistinguishable from one that was never installed.
-- The mirror is now a verbatim copy of the source with the banner injected after
-  the opening `---`. It is no longer re-serialised from parsed frontmatter, so
-  `license`, `compatibility`, `metadata` and multi-line descriptions can no
-  longer be dropped or truncated by the generator.
-- The mirror now includes every file in a skill directory, not just `SKILL.md`.
-  Files under `references/` and `scripts/` were silently dropped, so a skill
-  whose instructions pointed at them would have shipped broken.
-- Removed mirrored skills with no source are deleted rather than left behind.
-  A stale skill in the mirror keeps loading on every host.
+- **The mirror is a verbatim copy.** The generator never re-serialises
+  frontmatter from parsed fields, so `license`, `compatibility`, `metadata`
+  and multi-line descriptions cannot be dropped, and files under `references/`
+  ship intact.
+- **`validate` checks the mirror as well as the source.** The mirror is what
+  five of the six supported hosts load, so validating only the source leaves
+  the shipping artefact unchecked. It also reports ghost skills, a mirror file
+  that does not open with `---`, and a missing or mismatched `name`.
 
-### Added (packaging)
+`.gitattributes` forces LF in the working tree on every platform. With
+`core.autocrlf` on Windows, CRLF would trip the validator's line-ending check
+and break the byte-exact mirror comparison for every Windows contributor.
 
-- `license` and `compatibility` frontmatter on all skills, per the agentskills.io
-  specification. Both are copied verbatim into the mirror.
-- `npm run validate` now checks the mirror, not only the source. Previously the
-  copy that five hosts load was never validated, which is how the banner bug
-  above shipped.
-- `validate.mjs` reports ghost skills, a mirror file that does not open with
-  `---`, a missing or mismatched `name`, and an over-length `description`.
+### Community surface
 
-### Documentation
+`CONTRIBUTING.md`, `AGENTS.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md` (including
+the `pull_request_target` constraint and the per-role token table), `SUPPORT.md`,
+this file, `CODEOWNERS`, `dependabot.yml`, and bug, feature and story issue
+templates. `npm run validate` fails if any of them go missing, because a
+marketplace plugin is judged on its onboarding before it is judged on its
+skills.
 
-- `SECURITY.md` - reporting path, the token each role needs, the
-  `pull_request_target` constraint, and how to inspect a third-party skill
-  before installing it.
-- `SUPPORT.md` - where to ask, what makes a bug report actionable, and an
-  explicit list of what is not a bug.
-- `CODEOWNERS`, `CODE_OF_CONDUCT.md`, and bug / feature issue templates.
-- `CONTRIBUTING.md` - added the rules that were previously only implicit:
-  calibrate specificity per section, give a default rather than a menu, add
-  what the agent does not know, keep long detail in `references/` with a stated
-  trigger, and no runtime dependencies.
-
-## [0.1.0]
-
-Initial release. Seven skills, the `maco@maco` Claude Code plugin, the
-`.agents/skills/` mirror, and two consumer workflow templates.
+No runtime dependencies. The scripts use Node built-ins only, which is what
+keeps `npm run validate` reproducible and free.
