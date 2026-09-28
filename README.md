@@ -1,9 +1,31 @@
-# MACO
+<p align="center">
+  <img src="docs/assets/maco.png" alt="MACO Octopus Orchestrator Mascot" width="160" />
+</p>
 
-**M**aintainer-**A**ssisted **C**ontribution **O**rchestrator.
+<h1 align="center">MACO</h1>
 
-Portable AI pull-request review, acceptance-criteria gating, and CI
-self-healing for GitHub. One plugin, nine agent hosts, **your** model.
+<p align="center">
+  <strong>Maintainer-Assisted Contribution Orchestrator</strong><br>
+  Portable AI pull-request review, acceptance-criteria gating, and CI self-healing for GitHub.<br>
+  One plugin, nine agent hosts, <strong>your</strong> model.
+</p>
+
+<p align="center">
+  <a href="https://github.com/SriSatyaLokesh/maco/actions/workflows/ci.yml"><img src="https://github.com/SriSatyaLokesh/maco/actions/workflows/ci.yml/badge.svg" alt="CI Status" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT" /></a>
+  <img src="https://img.shields.io/badge/hosts-9_supported-0E8A16.svg" alt="9 Agent Hosts" />
+  <img src="https://img.shields.io/badge/dependencies-0-brightgreen.svg" alt="Zero Dependencies" />
+</p>
+
+<p align="center">
+  <a href="#install">Install</a> &bull;
+  <a href="#the-skills">Skills</a> &bull;
+  <a href="#ci-wiring">CI Wiring</a> &bull;
+  <a href="docs/ARCHITECTURE.md">Architecture</a> &bull;
+  <a href="CONTRIBUTING.md">Contributing</a>
+</p>
+
+---
 
 MACO is two-sided. It helps the **maintainer** decide which PRs are ready and
 hands contributors a patch they can accept with one click. It helps the
