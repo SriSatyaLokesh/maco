@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or discussion
+    url: https://github.com/SriSatyaLokesh/maco/discussions
+    about: "Not a bug, and not a security problem - ask here instead of opening an issue."
+  - name: Security vulnerability
+    url: https://github.com/SriSatyaLokesh/maco/security/advisories/new
+    about: "Report privately. Do not open a public issue for a security problem."

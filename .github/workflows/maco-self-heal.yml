@@ -1,0 +1,108 @@
+name: MACO Self-Heal
+
+# Fires only when another workflow in this repository has already gone red, so
+# the model is only ever paid for against a real failure.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Failed run id to diagnose
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: maco-self-heal-${{ github.event.workflow_run.id || inputs.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  self-heal:
+    # The guard from the maco-self-heal skill, expressed as a job condition.
+    # A red test run is evidence about the code, not a typo - an agent that
+    # patches failing tests is an agent that deletes evidence.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve failed run
+        id: run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          rid="${{ github.event.workflow_run.id || inputs.run_id }}"
+          echo "id=$rid" >> "$GITHUB_OUTPUT"
+          pr="$(gh api "repos/${{ github.repository }}/actions/runs/$rid" --jq '.pull_requests[0].number // empty')"
+          echo "pr=${pr:-}" >> "$GITHUB_OUTPUT"
+          if [ -z "$pr" ]; then
+            echo "::notice::No PR is associated with run $rid - nothing to heal."
+          fi
+
+      - name: Extract failure trace
+        if: steps.run.outputs.pr != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RID: ${{ steps.run.outputs.id }}
+        run: |
+          set -euo pipefail
+          # Hard cap at 20 lines. The skill budget is 20 lines; do not hand the
+          # model 400 and hope it finds the signal.
+          gh api "repos/${{ github.repository }}/actions/runs/$RID/logs" \
+            | grep -vE '^\s*$' | tail -n 20 > /tmp/trace.txt
+          echo "::group::Failure trace"
+          cat /tmp/trace.txt
+          echo "::endgroup::"
+
+      - name: Fetch PR diff
+        if: steps.run.outputs.pr != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh pr diff "${{ steps.run.outputs.pr }}" > /tmp/pr.diff
+          wc -c /tmp/pr.diff
+
+      - name: Scope gate
+        id: gate
+        if: steps.run.outputs.pr != ''
+        run: |
+          set -euo pipefail
+          bytes="$(wc -c < /tmp/pr.diff)"
+          if [ "$bytes" -gt 20000 ]; then
+            echo "::notice::Diff is $bytes bytes - outside self-heal scope."
+            echo "eligible=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # A failing *test* is a report, not a typo.
+          if grep -qE '^\s*[0-9]+ (failed|passing)|✕|FAIL\b' /tmp/trace.txt; then
+            echo "::notice::Failure looks like a test failure - handing back to a human."
+            echo "eligible=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "eligible=1" >> "$GITHUB_OUTPUT"
+
+      - name: Diagnose and propose patch
+        id: heal
+        if: steps.gate.outputs.eligible == '1'
+        env:
+          MACO_MODEL: ${{ vars.MACO_SELF_HEAL_MODEL }}
+        run: |
+          set -euo pipefail
+          echo "Implement the provider call here - see docs/MODELS.md."
+          echo "Expected output: a \`\`\`suggestion block with COMPLETE replacement text."
+          exit 1
+
+      - name: Post suggestion
+        if: always() && steps.heal.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh pr comment "${{ steps.run.outputs.pr }}" --body-file /tmp/heal-comment.md

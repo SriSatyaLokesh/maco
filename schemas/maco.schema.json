@@ -1,0 +1,102 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/SriSatyaLokesh/maco/schemas/maco.schema.json",
+  "title": "MACO configuration",
+  "type": "object",
+  "required": ["version", "ac", "labels", "review", "budget", "models"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "const": 1 },
+    "ac": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["prefix", "startAt"],
+      "properties": {
+        "prefix": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8,
+          "description": "Acceptance-criteria identifier prefix, e.g. AC -> AC-1, AC-2."
+        },
+        "startAt": { "type": "integer", "minimum": 0 },
+        "blockerSeverity": {
+          "type": "string",
+          "enum": ["blocker", "warning"],
+          "description": "Which severity blocks a merge. Default: blocker."
+        }
+      }
+    },
+    "labels": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["story", "needsReview", "reviewed", "autofix", "triage"],
+      "properties": {
+        "story": { "type": "string" },
+        "needsReview": { "type": "string" },
+        "reviewed": { "type": "string" },
+        "autofix": { "type": "string" },
+        "triage": { "type": "string" }
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["failOn"],
+      "properties": {
+        "diffContextLines": { "type": "integer", "minimum": 0, "maximum": 20 },
+        "maxCommentLines": { "type": "integer", "minimum": 5, "maximum": 200 },
+        "failOn": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["blocker", "warning"] },
+          "uniqueItems": true,
+          "description": "Severities that make the AC audit exit non-zero."
+        },
+        "ignorePaths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Glob patterns excluded from the review diff."
+        }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxRunsPerDay"],
+      "properties": {
+        "maxRunsPerDay": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Zero disables all model-invoking MACO workflows."
+        },
+        "failOpen": {
+          "type": "boolean",
+          "description": "When the budget is exhausted, post a human comment instead of failing the run."
+        }
+      }
+    },
+    "models": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["roles"],
+      "description": "MACO never picks a model. Map each role to a model ID your provider understands.",
+      "properties": {
+        "roles": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["hint"],
+            "properties": {
+              "hint": { "type": "string" },
+              "default": {
+                "type": ["string", "null"],
+                "description": "null means: let the host agent choose."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

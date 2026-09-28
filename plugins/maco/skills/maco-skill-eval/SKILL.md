@@ -1,0 +1,137 @@
+---
+name: maco-skill-eval
+description: Grade a MACO skill's output against explicit assertions using real artifacts - a genuine pull request, one that skips an acceptance criterion, and one large enough to exceed budget. Use when changing a skill, before opening a PR that edits plugins/maco/skills/, or when a skill produces a verdict you do not trust. Systematic version of the manual test loop described in CONTRIBUTING.
+license: MIT
+compatibility: >-
+  Requires `gh` (GitHub CLI 2.0+) and `git`. Maintainer tool: it is for
+  changing MACO, not for using it on someone else's repository.
+---
+
+# MACO Skill Eval
+
+MACO's product is prompts. A prompt has no unit test, so it gets reviewed by
+reading, which is how a confidently wrong verdict reaches a contributor.
+
+This skill makes the review repeatable. It is a **maintainer tool** for
+changing MACO itself. If you are reviewing a pull request on someone else's
+repository, you want `code-review`, not this.
+
+## Inputs
+
+- A skill name from `plugins/maco/skills/`
+- A fixture: a real artifact from a real repository, plus the assertion you
+  expect the skill to reach
+
+`references/eval-cases.md` has the three canonical fixtures and their
+assertions. Start there; add cases as you find real failures.
+
+## Procedure
+
+### 1. State the assertion before you run
+
+If you cannot write down what the skill *should* say, you cannot tell whether
+it was right. An eval with no assertion is just a transcript.
+
+```
+skill:    maco-ac-audit
+fixture:  PR #142, linked issue #131
+assert:   AC-2 is "partial" - the note is created but the timestamp is not persisted
+expect:   verdict "fail", AC-2 status "partial", evidence cites the component
+```
+
+### 2. Run it in a clean context
+
+Start a fresh session. A skill that only behaves correctly because of
+conversation history is not a skill, it is a lucky prompt.
+
+Record what the host actually loaded. If it loaded a *different* skill, that
+is a finding, not a setup problem: the `description` field is the trigger
+surface, and a near-miss means a real user's request will pick the wrong one.
+
+### 3. Grade on three axes
+
+**Correctness.** Did it reach the assertion? For a verdict skill, grade the
+mapping, not the prose.
+
+**Calibration.** Did it claim more confidence than it had? A large refactor
+diff should come back `skipped` or low-confidence, not a confident partial
+review.
+
+**Cost.** How many tokens, and did it read what it needed? A skill that read
+the whole repository to review a diff has failed its budget even if the verdict
+was right.
+
+### 4. Name the failure mode
+
+This is the part worth doing carefully, because the categories need different
+fixes.
+
+| Failure | What it means | Where to fix |
+|---|---|---|
+| **Confident wrong** | Reached a verdict, and the verdict was wrong | The skill body. Usually a missing constraint or a rule that permits guessing |
+| **Missing trigger** | Never loaded for a prompt it should handle | The `description` field |
+| **False trigger** | Loaded for a prompt it should not handle | The `description` field, or a scope line in the body |
+| **Over-confident** | Right answer, unjustified certainty | Calibration rules |
+| **Over-budget** | Read far more than the task needed | Input limits, or a `references/` split |
+| **Drifted** | Was right, regressed after an edit | Re-run the full case set, not the one you changed |
+
+**Confident wrong outranks everything else.** An agent that says "I cannot
+determine this" costs a maintainer thirty seconds. An agent that invents an
+AC mapping costs a contributor a day and teaches the community not to trust the
+bot.
+
+### 5. Fix at the right layer
+
+- Wrong verdict with a clear rule missing -> add the rule to the body, with the
+  reason.
+- Repeatedly right but slow -> move detail into `references/` and say when to
+  load it.
+- Right answer every time, no stated budget -> add one. A skill without a
+  stated budget will be pasted into a larger diff eventually.
+- Same correction twice -> it belongs in the body permanently.
+
+## Output
+
+```
+## Eval: maco-ac-audit
+
+| Case | Assert | Result | Cost |
+|---|---|---|---|
+| correct PR | pass | pass | 4.1k |
+| skipped AC | fail on AC-2 | pass | 5.2k |
+| 3k-line refactor | skip or low confidence | FAIL - confident partial review | 41k |
+
+### Finding: over-confidence on large diffs
+The skill has no input limit, so a 3,000-line diff produced a confident
+three-of-nine verdict. The honest answer was "skipped: diff too large".
+
+Fix: state the budget in the body, and make exceeding it an explicit outcome
+rather than something the model has to notice on its own.
+
+### Finding: false trigger on "audit this"
+Loading on the bare verb "audit" pulls this skill in for non-PR requests.
+The description says "inside GitHub Actions or any automated gate"; say it in
+the trigger phrase, not in the caveat.
+```
+
+## Rules
+
+- **Never fix a skill against a synthetic fixture.** A prompt tuned on invented
+  input breaks on real input, and the breakage is invisible until a contributor
+  hits it. Use real PRs, real issues, redacted if needed.
+- **Never grade on prose quality.** A terse correct verdict beats an eloquent
+  wrong one, and prose length is not a quality signal.
+- **Never skip the case you just changed.** Re-run all of them. The failure mode
+  worth hunting is the regression, not the bug in front of you.
+- **Never tune a skill to pass a case it should skip.** If a fixture is
+  genuinely out of scope, the correct result is `skipped`, and a skill that
+  answers it anyway is the bug.
+- One eval run is one skill and one case set. Changing two skills at once makes
+  the result unattributable.
+
+## Verify before filing
+
+- [ ] The assertion was written before the run, not after seeing the output.
+- [ ] All cases ran, including the ones you expected to pass.
+- [ ] Every failure is named by category, not described as "wrong".
+- [ ] The fix is in the skill body or the `description`, not in a retry prompt.

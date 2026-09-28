@@ -1,0 +1,128 @@
+name: MACO CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  pull_request_target:
+    types: [opened, reopened]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: PR number to audit
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: maco-audit-${{ github.event.pull_request.number || inputs.pr }}
+  cancel-in-progress: true
+
+jobs:
+  ac-audit:
+    # Audit is advisory by default. Set `enforce: true` in the workflow input
+    # or a repo variable once the false-positive rate is acceptable.
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Resolve PR number
+        id: pr
+        run: echo "number=${{ github.event.pull_request.number || inputs.pr }}" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve linked issue
+        id: issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ steps.pr.outputs.number }}
+        run: |
+          set -euo pipefail
+          body="$(gh pr view "$PR" --json body -q .body)"
+          # Highest-signal keyword wins: a closing keyword beats a passing ref.
+          n="$(printf '%s\n' "$body" \
+            | grep -oiE '(clos(e|es|ed)|fix(es|ed)?|resolv(e|es|ed))\s*#([0-9]+)' \
+            | grep -oE '[0-9]+' | head -n1 || true)"
+          echo "number=${n:-}" >> "$GITHUB_OUTPUT"
+          if [ -z "$n" ]; then
+            echo "::notice::No closing keyword found. The AC audit will skip."
+          fi
+
+      - name: Fetch issue body
+        if: steps.issue.outputs.number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue view "${{ steps.issue.outputs.number }}" --json body -q .body > /tmp/issue-body.md
+          echo "::group::Acceptance criteria"
+          grep -nE '^\s*[-*]\s*AC-[0-9]+' /tmp/issue-body.md || echo "(none found)"
+          echo "::endgroup::"
+
+      - name: Build diff payload
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ steps.pr.outputs.number }}
+        run: |
+          set -euo pipefail
+          gh pr diff "$PR" > /tmp/pr.diff
+          wc -c /tmp/pr.diff
+
+      - name: Budget gate
+        id: budget
+        run: |
+          set -euo pipefail
+          max="$(node -p "require('./maco.json').budget.maxRunsPerDay" 2>/dev/null || echo 0)"
+          if [ "$max" -eq 0 ]; then
+            echo "::notice::budget.maxRunsPerDay is 0 - all model runs disabled."
+            echo "run=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          used="$(gh api "repos/${{ github.repository }}/actions/runs?per_page=100" \
+            --jq '[.workflow_runs[] | select(.name=="MACO CI")] | length' 2>/dev/null || echo 0)"
+          if [ "$used" -ge "$max" ]; then
+            echo "::notice::Daily MACO budget reached ($used/$max). Skipping - fail open."
+            echo "run=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      # MACO never ships a model call. The repo supplies its own provider, so
+      # this step is where you choose: an action from your provider, a thin
+      # curl wrapper, or a self-hosted runner. See docs/MODELS.md.
+      - name: Run AC audit
+        id: audit
+        if: steps.budget.outputs.run == '1' && steps.issue.outputs.number != ''
+        env:
+          PR: ${{ steps.pr.outputs.number }}
+          MACO_MODEL: ${{ vars.MACO_AC_AUDIT_MODEL }}
+        run: |
+          set -euo pipefail
+          echo "Implement the provider call here - see docs/MODELS.md."
+          echo "Expected output: a \`\`\`maco-verdict fenced JSON block."
+          exit 1
+
+      - name: Publish verdict
+        if: always() && steps.audit.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ steps.pr.outputs.number }}
+        run: |
+          set -euo pipefail
+          {
+            echo '## MACO AC Audit'
+            echo
+            echo '<details><summary>Verdict</summary>'
+            echo
+            echo '```'
+            cat /tmp/verdict.txt
+            echo '```'
+            echo
+            echo '</details>'
+          } > /tmp/comment.md
+          gh pr comment "$PR" --body-file /tmp/comment.md

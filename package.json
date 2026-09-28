@@ -1,0 +1,40 @@
+{
+  "name": "maco",
+  "version": "0.1.0",
+  "description": "Maintainer-Assisted Contribution Orchestrator - portable AI review, acceptance-criteria gating and self-healing for GitHub pull requests",
+  "type": "module",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "maco": "./scripts/maco.mjs"
+  },
+  "scripts": {
+    "sync": "node scripts/sync-skills.mjs",
+    "check": "node scripts/sync-skills.mjs --check",
+    "install:maco": "node scripts/maco.mjs install",
+    "validate": "node scripts/validate.mjs"
+  },
+  "keywords": [
+    "code-review",
+    "open-source",
+    "agentskills",
+    "claude-code-plugin",
+    "github-actions",
+    "gh",
+    "pull-request"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SriSatyaLokesh/maco.git"
+  },
+  "files": [
+    "plugins/",
+    ".agents/",
+    "schemas/",
+    "scripts/",
+    "maco.json"
+  ]
+}

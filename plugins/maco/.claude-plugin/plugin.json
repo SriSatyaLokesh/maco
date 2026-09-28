@@ -1,0 +1,17 @@
+{
+  "name": "maco",
+  "version": "0.1.0",
+  "description": "AI pull-request review against numbered acceptance criteria, contributor pre-flight, CI self-healing, and issue/PR triage.",
+  "author": {
+    "name": "Satya",
+    "url": "https://github.com/SriSatyaLokesh"
+  },
+  "homepage": "https://github.com/SriSatyaLokesh/maco",
+  "license": "MIT",
+  "keywords": [
+    "code-review",
+    "open-source",
+    "contribution",
+    "github"
+  ]
+}

@@ -1,0 +1,42 @@
+# Normalise line endings in the working tree.
+#
+# This repository is Windows-first by design: the mirror generator copies
+# bytes, `npm run check` compares them byte for byte, and `npm run validate`
+# warns on CRLF inside a SKILL.md. If git is free to rewrite LF to CRLF on
+# checkout, then every Windows contributor sees spurious drift and every skill
+# trips the CRLF warning. On top of that, a CRLF mirror is not what the
+# publication tooling reads.
+#
+# So: text files are stored LF and checked out LF, on every platform.
+
+* text=auto eol=lf
+
+# Anything a human reads or a parser reads. Be explicit, because these are the
+# files where a line-ending change is a real defect rather than cosmetics.
+*.md   text eol=lf
+*.json text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.mjs  text eol=lf
+*.js   text eol=lf
+
+# Skill directories: these are the product, and the mirror is a byte copy.
+skills/**        text eol=lf
+.agents/skills/** text eol=lf
+plugins/**       text eol=lf
+
+# No dependencies, so no lockfile to pin - but if one is ever added, do not let
+# a line-ending change produce a phantom diff.
+package-lock.json text eol=lf
+
+# Binaries. Never touched.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.ico  binary
+*.pdf  binary
+*.mp4  binary
+*.zip  binary
+*.gz   binary

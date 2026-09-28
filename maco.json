@@ -1,0 +1,55 @@
+{
+  "$schema": "./schemas/maco.schema.json",
+  "version": 1,
+  "ac": {
+    "prefix": "AC",
+    "startAt": 1,
+    "blockerSeverity": "blocker"
+  },
+  "labels": {
+    "story": "maco:story",
+    "needsReview": "maco:needs-review",
+    "reviewed": "maco:reviewed",
+    "autofix": "maco:autofix",
+    "triage": "maco:triage"
+  },
+  "review": {
+    "diffContextLines": 3,
+    "maxCommentLines": 40,
+    "failOn": ["blocker"],
+    "ignorePaths": [
+      "**/*.lock",
+      "**/*.snap",
+      "dist/**",
+      "build/**"
+    ]
+  },
+  "budget": {
+    "maxRunsPerDay": 20,
+    "failOpen": true
+  },
+  "models": {
+    "roles": {
+      "triage": {
+        "hint": "Cheapest fast model. Short classification over issue text.",
+        "default": null
+      },
+      "intake": {
+        "hint": "Runs locally in your existing session. Use whatever you already pay for.",
+        "default": null
+      },
+      "acAudit": {
+        "hint": "Runs on every PR. Cheap and fast; mechanical diff-to-AC mapping.",
+        "default": null
+      },
+      "selfHeal": {
+        "hint": "Runs only on CI failure. Needs real reasoning over diff plus trace.",
+        "default": null
+      },
+      "escalation": {
+        "hint": "Rare. Frontier reasoning for contested or ambiguous reviews.",
+        "default": null
+      }
+    }
+  }
+}

@@ -1,0 +1,181 @@
+---
+name: maco-spec-to-issue
+description: Turn existing specification documents - a PRD, architecture doc, ADR set, roadmap or traceability matrix - into a structured GitHub backlog of milestones and issues with numbered acceptance criteria. Use when a repo already has written specs but no issues, or when asked to break a roadmap, phase plan, or design doc down into implementable work. Reads and plans before it writes, and never creates issues without confirmation.
+license: MIT
+compatibility: >-
+  Requires `gh` (GitHub CLI 2.0+) authenticated with issue write access, and
+  readable markdown. Dry-runs by default.
+---
+
+# MACO Spec To Issue
+
+`maco-story` handles one idea you can describe in a sentence. This handles the
+other case: the thinking is already written down, across many files, and nobody
+has turned it into a backlog.
+
+## The rule
+
+**Plan before you write.** Print every milestone and every issue, get one
+confirmation, then create. A spec that is 40 percent ambiguous does not become
+40 issues, it becomes 40 wrong issues that a contributor will implement.
+
+## Why this is not `maco-story` in a loop
+
+`maco-story` interviews a human for the three things a spec is bad at
+recording: outcome, edge cases, data boundaries. A spec already answers the
+outcome question. What it is bad at is **decomposition** - turning a phase
+heading into something a stranger can build in a day. That is this skill's job,
+and it is a different failure mode from intake.
+
+## Inputs
+
+- A path to a spec directory or file. Default: `docs/`, `spec/`, `adr/`,
+  `*.md` in the repo root.
+- `$MACO_CONFIG` - resolved `maco.json`, for the AC prefix and labels.
+
+## Procedure
+
+### 1. Inventory the spec surface
+
+```
+ls docs/ 2>/dev/null; ls spec/ 2>/dev/null; ls docs/adr/ 2>/dev/null
+```
+
+Read **headings and the first paragraph under each**. Do not read whole
+documents. A spec's structure carries most of its decomposition signal, and a
+40,000-word architecture doc read end to end will exhaust the budget before you
+have written a single issue.
+
+### 2. Find the scope boundary first
+
+Before listing any work, locate the passages that say what is **not** being
+built. In rough order of reliability:
+
+1. An explicit non-goals or out-of-scope section
+2. A trade-off register, or a table with a "rejected" / "revisit when" column
+3. A section on explicit constraints (budget, compliance, performance limits)
+4. An ADR whose status is `accepted` and whose title begins with a rejection
+
+Read `references/sources.md` when the documents are unfamiliar or the boundary
+is genuinely ambiguous.
+
+Write the boundary down before you continue. Every issue you generate inherits
+it, and it becomes the `Out of scope` block that stops the "while I was in
+there" PR.
+
+### 3. Extract candidate work items
+
+Work items come from, in order of signal:
+
+- Roadmap or phase headings that name a deliverable
+- A traceability matrix, where each row names a PRD section mapped to a doc
+  section - **a row is a strong candidate, the whole table is not**
+- ADRs whose status is `accepted` and describe a change, not a decision to
+  change nothing
+- Explicit "we will build X" statements in prose
+
+### 4. Cut each candidate down to one outcome
+
+An issue is **one thing a user or operator can observe changing**. Apply these
+cuts:
+
+| Candidate | Verdict |
+|---|---|
+| Names one observable outcome | Issue |
+| Names several outcomes | Split, one per outcome |
+| Is a refactor with no behaviour change | Chore issue, no ACs, label it as such |
+| Is already shipped | Close it, do not file |
+| Names an outcome nobody can verify | Rewrite, or drop it and say why |
+
+A phase heading is not a story. "Phase 2: Curriculum and Community" is six
+stories and two chores, not one issue with a seven-item checklist.
+
+### 5. Write the ACs
+
+Use the criteria from `maco-story`: single observable outcome, independently
+verifiable, phrased so a test could be written from it alone, silent on
+implementation. Do not restate that method here - load `maco-story` if you need
+it.
+
+Carry across any constraint the spec states that a contributor could otherwise
+violate: a performance ceiling, a policy limit, a compatibility promise. These
+belong in the issue body as `Constraints`, because they are requirements, not
+suggestions.
+
+### 6. Validate the plan
+
+Before showing anything, check the plan against itself:
+
+- [ ] Every issue has at least one `AC-n`
+- [ ] No two issues share an outcome
+- [ ] Every issue's `Out of scope` is non-empty
+- [ ] Every issue traces to a named source section, and you can say which
+- [ ] No issue restates a constraint the spec already enforces mechanically
+      (a linter, a type checker, a CI gate) - those belong in CI, not an issue
+
+The last one matters. An acceptance criterion a compiler already guarantees is a
+criterion that can only ever be `met`, which is noise in every future audit.
+
+### 7. Dry run, then write
+
+Print the plan as a table: milestone, issue title, AC count, source section.
+Ask for confirmation **once**, for the whole plan.
+
+```
+Milestone: M1 - Foundation
+  #1  Focus Room: timestamped notes          3 ACs   <- ARCHITECTURE.md 9
+  #2  Ingestion: playlist parser             4 ACs   <- ARCHITECTURE.md 8.1
+  ...
+Not filed: "Improve search relevance" - no verifiable outcome in the spec.
+```
+
+On confirmation:
+
+```
+gh api repos/{owner}/{repo}/milestones -f title="M1 - Foundation" --jq .number
+gh issue create --title "..." --body-file - --label "maco:story" --milestone "M1 - Foundation"
+```
+
+Label comes from `maco.json` -> `labels.story`. Create the label if it does not
+exist; a story that cannot be found is a story nobody picks up.
+
+## Gotchas
+
+- **A traceability matrix is a coverage map, not a task list.** One row per
+  PRD section is a completeness check on the docs, not a unit of work. Filing
+  47 issues because the table has 47 rows produces a backlog nobody reads.
+- **"Non-goals" is where scope is actually defined.** Prose descriptions drift
+  toward what the project will do; the non-goals list is the part a maintainer
+  wrote down under pressure and rarely revises. Prefer it over the intro.
+- **Docs disagree with each other more often than you expect.** When two files
+  state different constraints, do not pick the newer one silently. File the
+  conflict as an issue in its own right - a spec contradiction is a real bug,
+  and it blocks the work item that depends on it.
+- **An ADR titled "use X" is a decision, not a task.** It becomes a task only
+  when the thing being decided is not already done.
+- **`Superseded` and `Rejected` ADRs are history.** Never generate work from
+  them. Check the status field.
+- **Never invent an AC the spec does not support.** Put the uncertainty in
+  `Open questions` and let a human resolve it. An invented AC becomes a test
+  somebody has to satisfy forever.
+
+## Rules
+
+- **Never create anything before the dry run is confirmed.** One confirmation
+  covers the whole plan; do not ask per issue.
+- **Never file an issue you cannot point at a source section for.**
+- **Never file a duplicate.** Search open issues first and merge into an
+  existing one if it covers the same outcome.
+- **Never edit or delete existing spec files.** This skill reads them.
+- Read only headings and first paragraphs. If a document must be read in full
+  to be understood, extract a `references/` note and stop, then say so.
+- Roughly 3,000 tokens for a 10-document spec. Well past that, you are reading
+  prose you did not need.
+
+## Verify before writing
+
+- [ ] Every `Out of scope` is non-empty and traceable to a stated boundary.
+- [ ] No AC is satisfied by a linter or the type checker.
+- [ ] No two issues share an outcome.
+- [ ] Every dropped candidate is listed with the reason, so a human can argue
+      with the cut rather than guess at it.

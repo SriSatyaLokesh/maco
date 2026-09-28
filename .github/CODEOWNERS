@@ -1,0 +1,36 @@
+# Code owners
+#
+# Automatic review requests. GitHub requests a review from every owner whose
+# pattern matches a changed file, so keep this list accurate or it becomes
+# noise people learn to dismiss.
+#
+# Until there is more than one maintainer this file is a placeholder for a real
+# review policy. When a second maintainer joins, split the domain patterns
+# below and give each person their area. A CODEOWNERS file that routes
+# everything to one person is a bottleneck, not a safety net.
+
+# Default: nothing is owned by default, so a new top-level file does not
+# silently inherit a review requirement nobody agreed to.
+/*                     @SriSatyaLokesh
+
+# The product. A change here changes what an agent says to a contributor.
+/plugins/             @SriSatyaLokesh
+/skills/              @SriSatyaLokesh
+
+# The mirror. Never hand-edit; it is generated. Owned because a hand-edit here
+# fails CI, and the next person needs to know why.
+/.agents/             @SriSatyaLokesh
+
+# Release surface.
+/.claude-plugin/       @SriSatyaLokesh
+/maco.json             @SriSatyaLokesh
+/schemas/             @SriSatyaLokesh
+
+# Deterministic tooling. A change to these decides what ships broken and what
+# ships blocked, so it gets looked at carefully.
+/scripts/             @SriSatyaLokesh
+/.github/workflows/   @SriSatyaLokesh
+
+# Docs. Lower risk, but the install instructions are the first thing a
+# stranger reads, so a stale README is a real bug.
+/docs/                @SriSatyaLokesh

@@ -1,0 +1,19 @@
+version: 2
+
+updates:
+  # MACO has no npm dependencies by design (the scripts use Node built-ins), so
+  # the only supply chain here is the GitHub Actions itself.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "ci"
+    labels:
+      - dependencies
+    reviewers:
+      - SriSatyaLokesh
+
+  # Consumer workflow templates are YAML files in this repository. Dependabot
+  # does not scan them, because they are not this repository's CI. Review them
+  # by hand when a pinned action version goes stale.
