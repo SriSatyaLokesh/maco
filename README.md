@@ -175,6 +175,10 @@ measurements behind them, is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 Model roles and how to wire a provider are in
 [docs/MODELS.md](docs/MODELS.md).
 
+A generated map of how the parts connect is in
+[docs/codebase-map/](docs/codebase-map/README.md). It is a one-time snapshot
+and nothing regenerates it.
+
 ## License
 
 MIT. See [LICENSE](LICENSE). Copyright (c) 2026 Satya
