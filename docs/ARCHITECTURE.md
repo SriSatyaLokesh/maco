@@ -4,6 +4,12 @@ This records the decisions that shaped MACO, the alternatives that were
 rejected, and the reasoning. It exists so a future maintainer does not have to
 rediscover why the obvious approach was the wrong one.
 
+The structure this document reasons about is drawn in
+[docs/architecture.html](docs/architecture.html): the contribution path from an
+issue to a merge, and the generated mirror reaching the agent hosts. Read the
+diagram for shape and this document for the reasoning. Where the two disagree,
+this document is the one that is checked in review.
+
 ## 1. The design constraint that decides everything else
 
 **MACO must be installable by someone who pays for a different model.**

@@ -31,6 +31,15 @@ MACO is two-sided. It helps the **maintainer** decide which PRs are ready and
 hands contributors a patch they can accept with one click. It helps the
 **contributor** know what a PR needs before a human ever reads it.
 
+<p align="center">
+  <img src="docs/assets/maco-architecture.png" alt="MACO architecture: a contribution moving from an issue through the acceptance-criteria audit, a code review and a merge, plus the generated skill mirror reaching the agent hosts" width="880" />
+</p>
+
+<p align="center">
+  <a href="docs/architecture.html"><strong>Open it interactively</strong></a> &bull;
+  focus a node, follow a path, switch themes. One file, no build.
+</p>
+
 ---
 
 ## What it is not
@@ -208,6 +217,10 @@ Model roles and how to wire a provider are in
 A generated map of how the parts connect is in
 [docs/codebase-map/](docs/codebase-map/README.md). It is a one-time snapshot
 and nothing regenerates it.
+
+The structure as a diagram is [docs/architecture.html](docs/architecture.html).
+This document records why, the diagram shows what, and they are meant to be read
+together.
 
 ## License
 
