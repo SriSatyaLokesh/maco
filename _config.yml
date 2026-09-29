@@ -1,0 +1,22 @@
+# GitHub Pages configuration.
+#
+# Pages is already enabled for this repository: a branch build from main at
+# path "/", serving a custom domain. This file adds a theme and nothing else.
+# It deliberately does not set `url` or `baseurl`, because the site resolves
+# under a subpath of an existing domain and setting either by hand is the usual
+# way to break that.
+#
+# Minimal is one of the themes GitHub Pages ships, so it resolves through the
+# Pages gem and no Gemfile is needed. Issue #9 records the reasoning.
+#
+# No `exclude` is set on purpose. Jekyll's defaults already skip dot-prefixed
+# directories and underscore-prefixed files, and overriding the list is the
+# fastest way to stop publishing something that used to publish.
+
+theme: jekyll-theme-minimal
+
+# A theme with no title renders an empty header. These two lines are the only
+# content in this file, and they are the only part of it that is a decision
+# rather than a mechanism. Remove them if the site is meant to have no title.
+title: MACO
+description: Maintainer-Assisted Contribution Orchestrator. Portable AI pull-request review, acceptance-criteria gating, and CI self-healing for GitHub.
